@@ -6,7 +6,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 from uuid import UUID
 
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.client import ClientCreate, ClientPublic
 from app.services.user_service import UserService
 
 router = APIRouter()
@@ -17,9 +17,9 @@ def get_user_service() -> UserService:
     """
     return UserService()
 
-@router.post("/", response_model=UserResponse)
+@router.post("/", response_model=ClientPublic)
 async def create_user(
-    user_data: UserCreate,
+    user_data: ClientCreate,
     user_service: UserService = Depends(get_user_service)
 ):
     """
@@ -31,7 +31,7 @@ async def create_user(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/", response_model=List[UserResponse])
+@router.get("/", response_model=List[ClientPublic])
 async def get_users(
     skip: int = 0,
     limit: int = 10,
@@ -43,7 +43,7 @@ async def get_users(
     users = await user_service.get_users(skip=skip, limit=limit)
     return users
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{user_id}", response_model=ClientPublic)
 async def get_user(
     user_id: UUID,
     user_service: UserService = Depends(get_user_service)
@@ -56,10 +56,10 @@ async def get_user(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.put("/{user_id}", response_model=UserResponse)
+@router.put("/{user_id}", response_model=ClientPublic)
 async def update_user(
     user_id: UUID,
-    user_data: UserUpdate,
+    user_data: ClientCreate,
     user_service: UserService = Depends(get_user_service)
 ):
     """

@@ -7,7 +7,7 @@ from uuid import UUID
 import asyncio
 
 from app.models.client import Client
-from app.schemas.user import UserCreate, UserUpdate, UserResponse
+from app.schemas.client import ClientCreate, ClientPublic
 
 class UserService:
     """
@@ -21,7 +21,7 @@ class UserService:
         """
         self._users: dict[UUID, Client] = {}
     
-    async def create_user(self, user_data: UserCreate) -> UserResponse:
+    async def create_user(self, user_data: ClientCreate) -> ClientPublic:
         """
         Create a new user.
         
@@ -42,8 +42,9 @@ class UserService:
         # Create new user
         user = Client(
             email=user_data.email,
-            name=user_data.name,
-            is_active=user_data.is_active
+            company_name=user_data.company_name,
+            password_hash=user_data.password,  # In real app, hash this
+            language_preference=user_data.language_preference
         )
         
         # Store user
@@ -52,7 +53,7 @@ class UserService:
         # Return user response
         return self._user_to_response(user)
     
-    async def get_users(self, skip: int = 0, limit: int = 10) -> List[UserResponse]:
+    async def get_users(self, skip: int = 0, limit: int = 10) -> List[ClientPublic]:
         """
         Get list of users with pagination.
         
@@ -67,7 +68,7 @@ class UserService:
         paginated_users = users[skip:skip + limit]
         return [self._user_to_response(user) for user in paginated_users]
     
-    async def get_user_by_id(self, user_id: UUID) -> Optional[UserResponse]:
+    async def get_user_by_id(self, user_id: UUID) -> Optional[ClientPublic]:
         """
         Get user by ID.
         
@@ -82,7 +83,7 @@ class UserService:
             return self._user_to_response(user)
         return None
     
-    async def update_user(self, user_id: UUID, user_data: UserUpdate) -> Optional[UserResponse]:
+    async def update_user(self, user_id: UUID, user_data: ClientCreate) -> Optional[ClientPublic]:
         """
         Update user by ID.
         
@@ -142,7 +143,7 @@ class UserService:
                 return user
         return None
     
-    def _user_to_response(self, user: Client) -> UserResponse:
+    def _user_to_response(self, user: Client) -> ClientPublic:
         """
         Convert User model to UserResponse schema.
         
@@ -152,11 +153,9 @@ class UserService:
         Returns:
             User response schema
         """
-        return UserResponse(
+        return ClientPublic(
             id=user.id,
             email=user.email,
-            name=user.name,
-            is_active=user.is_active,
-            created_at=user.created_at,
-            updated_at=user.updated_at
+            company_name=user.company_name,
+            language_preference=user.language_preference
         )

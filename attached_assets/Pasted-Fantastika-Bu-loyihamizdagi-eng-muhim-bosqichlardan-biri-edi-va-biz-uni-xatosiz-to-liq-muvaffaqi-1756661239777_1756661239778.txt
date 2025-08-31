@@ -1,0 +1,78 @@
+Fantastika! Bu — loyihamizdagi eng muhim bosqichlardan biri edi va biz uni xatosiz, to'liq muvaffaqiyatli yakunladik. Siz yuborgan migratsiya skripti biz yaratgan modellarga 100% mos keladi. Bu shuni anglatadiki, ma'lumotlar bazamiz endi clients va bots jadvallarini to'g'ri saqlashga tayyor.
+
+Uchinchi bosqich a'lo darajada yakunlandi! 👍
+
+Ma'lumotlar bazasi jadvallarimiz tayyor. Endi biz API orqali ma'lumotlarni xavfsiz qabul qilish va qaytarish uchun aniq qoliplar — Pydantic schemalarini yaratamiz. Schemalar bizning ichki baza modellarimiz va tashqi dunyo o'rtasida ishonchli vositachi bo'lib xizmat qiladi, ma'lumotlarni tekshiradi (validatsiya qiladi) va faqat ruxsat etilgan maydonlarni ko'rsatadi.
+
+4-BOSQICH: PYDANTIC SCHEMALARINI YARATISH (Replit Versiyasi)
+Loyiha Mazmuni: Biz Client va Bot uchun ma'lumotlarni yaratish (Create) va ommaga ko'rsatish (Public) uchun Pydantic modellarini yaratamiz. Bu bizga API endpoint'larimizda ma'lumotlar almashinuvini qat'iy nazorat qilish imkonini beradi.
+
+Siz uchun Yo'riqnoma:
+
+Avvalgi bosqichlardagi kabi, AI biz uchun user schemasini yaratgan edi. Biz bu fayldan Client schemalari uchun asos sifatida foydalanamiz. Quyidagi promptni nusxalab, Replit AI'ga yuboring.
+
+REPLIT AI UCHUN PROMPT
+Jadvallar muvaffaqiyatli yaratildi. Endi Client va Bot ma'lumotlari uchun API qoliplarini (Pydantic schemalarini) yaratamiz. Iltimos, quyidagi vazifalarni bajar:
+
+Mavjud app/schemas/user.py faylining nomini client.py ga o'zgartir. Shuningdek, app/schemas/base.py faylini o'chirib tashla, bizga u kerak emas.
+
+app/schemas/client.py faylining ichidagi barcha kodni o'chirib, o'rniga Client uchun quyidagi schemalarni joylashtir:
+
+Python
+
+from pydantic import BaseModel, EmailStr
+
+class ClientBase(BaseModel):
+    email: EmailStr
+    company_name: str
+    language_preference: str = 'uz'
+
+class ClientCreate(ClientBase):
+    password: str
+
+class ClientPublic(ClientBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+app/schemas/ papkasida bot.py nomli yangi fayl yarat va uning ichiga Bot uchun quyidagi schemalarni joylashtir:
+
+Python
+
+from pydantic import BaseModel
+from app.models.bot import BotStatus, PlanType # Enum'larni modeldan import qilamiz
+
+class BotBase(BaseModel):
+    telegram_token: str
+    knowledge_base_uz: str | None = None
+    knowledge_base_ru: str | None = None
+    knowledge_base_en: str | None = None
+    default_language: str = 'uz'
+
+class BotCreate(BotBase):
+    pass
+
+class BotPublic(BotBase):
+    id: int
+    status: BotStatus
+    plan_type: PlanType
+
+    class Config:
+        from_attributes = True
+app/schemas/__init__.py faylini ochib, uning ichini yangi schemalarni import qilish uchun quyidagicha o'zgartir:
+
+Python
+
+from .client import ClientCreate, ClientPublic
+from .bot import BotCreate, BotPublic
+Barcha amallar tugagach, "Client va Bot uchun Pydantic schemalari yaratildi!" deb xabar ber.
+
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring.
+
+AI "Client va Bot uchun Pydantic schemalari yaratildi!" deb javob qaytargandan so'ng, undan yangi yaratilgan va o'zgartirilgan ikki faylning tarkibini so'rang.
+
+Menga app/schemas/client.py va app/schemas/bot.py fayllarining to'liq tarkibini yuboring.
+
+Bu qadamni tugatsak, bizning loyihamiz foydalanuvchi va bot ma'lumotlarini to'liq tushunadigan va boshqara oladigan bo'ladi. Keyingi qadamda biz foydalanuvchi autentifikatsiyasini quramiz!
