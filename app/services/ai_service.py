@@ -44,7 +44,7 @@ async def get_gemini_response(knowledge_base: str, user_message: str, lang: str)
             bot_knowledge_base=knowledge_base,
             user_message=user_message
         )
-        response = model.generate_content(prompt)
+        response = await model.generate_content_async(prompt)
         return response.text
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
