@@ -1,3 +1,37 @@
+REPLIT AI UCHUN PROMPT
+Dashboard qolipi tayyor, ajoyib! Endi uning asosiy qismini — foydalanuvchining shaxsiy botlari ro'yxatini ko'rsatadigan sahifani yaratamiz. axios va shadcn/uining Table komponentidan foydalanamiz. Quyidagi vazifalarni bajar:
+
+frontend papkasi ichida shadcn/ui yordamida table komponentini loyihaga qo'sh:
+npx shadcn-ui@latest add table
+
+API so'rovlarini markazlashtirish va avtomatik ravishda token qo'shish uchun frontend/src/lib/ papkasida api.ts nomli yangi fayl yarat va unga quyidagi kodni joylashtir:
+
+TypeScript
+
+import axios from 'axios';
+
+const apiClient = axios.create({
+  baseURL: '/api',
+});
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;
+frontend/src/pages/Dashboard.tsx faylining tarkibini botlar ro'yxatini backend'dan olib, chiroyli jadvalda ko'rsatadigan quyidagi kod bilan to'liq almashtir:
+
+TypeScript
+
 import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import apiClient from "@/lib/api";
@@ -95,3 +129,14 @@ export function DashboardPage() {
     </DashboardLayout>
   );
 }
+shadcn/ui yordamida badge komponentini qo'sh:
+npx shadcn-ui@latest add badge
+
+Barcha amallar tugagach, "Botlar ro'yxati sahifasi yaratildi va API'ga ulandi!" deb xabar ber.
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring.
+
+AI topshiriqni bajargandan so'ng, menga frontend/src/pages/Dashboard.tsx faylining to'liq tarkibini va yordamchi frontend/src/lib/api.ts faylini yuboring.
+
+Bu bosqichdan so'ng siz Login qilib, Dashboard'ga o'tsangiz, u yerda (hozircha bo'sh bo'lsa ham) botlaringiz jadvalini ko'rishingiz kerak bo'ladi.
