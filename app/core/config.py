@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # CORS settings
     ALLOWED_HOSTS: List[str] = ["*"]
 
-    # BAZA UCHUN QATORNI QO'SH
-    DATABASE_URL: str
+    # Database configuration
+    DATABASE_URL: str = "sqlite+aiosqlite:///./database.db"
 
 settings = Settings()
