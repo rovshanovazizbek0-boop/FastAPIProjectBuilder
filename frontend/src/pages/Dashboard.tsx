@@ -1,17 +1,11 @@
-import { useEffect, useState } from "react";
+// frontend/src/pages/Dashboard.tsx faylining yangi tarkibi
+import { useEffect, useState, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import apiClient from "@/lib/api";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge"; // Badge'ni import qilamiz
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { CreateBotDialog } from "@/components/CreateBotDialog";
 
-// Bot ma'lumotlari uchun type interfeysini yaratamiz
 interface Bot {
   id: number;
   telegram_token: string;
@@ -25,32 +19,29 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchBots = async () => {
-      try {
-        const response = await apiClient.get('/bots/me');
-        setBots(response.data);
-      } catch (err) {
-        setError("Botlarni yuklashda xatolik yuz berdi.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBots();
+  const fetchBots = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.get('/bots/me');
+      setBots(response.data);
+    } catch (err) {
+      setError("Botlarni yuklashda xatolik yuz berdi.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const maskToken = (token: string) => {
-    return token.substring(0, 12) + '...';
-  }
+  useEffect(() => {
+    fetchBots();
+  }, [fetchBots]);
+
+  const maskToken = (token: string) => token.substring(0, 12) + '...';
 
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold">Mening Botlarim</h2>
-        {/* Bu tugmani keyingi bosqichda ishlatamiz */}
-        {/* <Button>Yangi bot qo'shish</Button> */}
+        <CreateBotDialog onBotCreated={fetchBots} />
       </div>
 
       {loading && <p>Yuklanmoqda...</p>}
@@ -74,18 +65,14 @@ export function DashboardPage() {
                     <TableCell className="font-medium">{bot.id}</TableCell>
                     <TableCell>{maskToken(bot.telegram_token)}</TableCell>
                     <TableCell>
-                      <Badge variant={bot.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                        {bot.status}
-                      </Badge>
+                      <Badge variant={bot.status === 'ACTIVE' ? 'default' : 'secondary'}>{bot.status}</Badge>
                     </TableCell>
                     <TableCell>{bot.default_language.toUpperCase()}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
-                    Hali botlaringiz yo'q.
-                  </TableCell>
+                  <TableCell colSpan={4} className="text-center">Hali botlaringiz yo'q. Birinchisini qo'shing!</TableCell>
                 </TableRow>
               )}
             </TableBody>
