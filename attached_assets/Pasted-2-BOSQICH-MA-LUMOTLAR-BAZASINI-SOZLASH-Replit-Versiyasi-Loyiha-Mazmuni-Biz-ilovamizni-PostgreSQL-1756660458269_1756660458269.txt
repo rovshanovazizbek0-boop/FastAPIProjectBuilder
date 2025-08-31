@@ -1,0 +1,63 @@
+2-BOSQICH: MA'LUMOTLAR BAZASINI SOZLASH (Replit Versiyasi)
+Loyiha Mazmuni: Biz ilovamizni PostgreSQL ma'lumotlar bazasiga ulaymiz. SQLAlchemy (ORM sifatida), psycopg (baza drayveri) va Alembic (migratsiyalarni boshqarish uchun) kabi qudratli vositalarni o'rnatamiz va sozlaymiz.
+
+Siz uchun Yo'riqnoma:
+
+Quyidagi blok ichidagi matnni to'liq nusxalab oling va uni Replit'dagi AI chatiga joylashtiring.
+
+REPLIT AI UCHUN PROMPT
+Ajoyib ish! Endi loyihani PostgreSQL ma'lumotlar bazasiga ulaymiz va Alembic yordamida migratsiyalarni sozlaymiz. Iltimos, quyidagi vazifalarni ketma-ket bajar:
+
+Kerakli kutubxonalarni o'rnat. Terminalda quyidagi buyruqni ishga tushir:
+uv pip install "sqlalchemy[asyncio]" alembic psycopg
+
+app/core/config.py faylini ochib, uning ichidagi Settings klassiga ma'lumotlar bazasiga ulanish uchun DATABASE_URL o'zgaruvchisini qo'sh. U Replit Secrets'dan o'qilishi kerak. Fayl quyidagi ko'rinishda bo'lsin:
+
+Python
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    # BAZA UCHUN QATORNI QO'SH
+    DATABASE_URL: str
+
+settings = Settings()
+app/core/ papkasida db.py nomli yangi fayl yarat va uning ichiga SQLAlchemyning asinxron ulanishini sozlash uchun quyidagi kodni joylashtir:
+
+Python
+
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
+from .config import settings
+
+engine = create_async_engine(settings.DATABASE_URL)
+AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+
+class Base(DeclarativeBase):
+    pass
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+Terminalda alembic init -t async app/migrations buyrug'ini ishga tushirib, migratsiyalar uchun sozlamalarni yarat.
+
+alembic.ini faylini sozla. sqlalchemy.url qatorini topib, uni quyidagicha o'zgartir (bu Replit Secrets'dan DATABASE_URL'ni olish uchun kerak):
+sqlalchemy.url = ${DATABASE_URL}
+
+app/migrations/env.py faylini sozla. Fayl boshiga from app.core.db import Base qatorini qo'sh va target_metadata = None qatorini target_metadata = Base.metadata deb o'zgartir.
+
+Barcha amallarni muvaffaqiyatli bajarganingdan so'ng, "Ma'lumotlar bazasi va Alembic sozlandi!" deb xabar ber.
+
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring. Replit sizdan DATABASE_URL nomli Secret yaratishni so'rashi mumkin. Unda PostgreSQL bazangizning ulanish manzilini kiriting.
+
+AI "Ma'lumotlar bazasi va Alembic sozlandi!" deb javob qaytargach, undan quyidagi ikki faylning tarkibini alohida-alohida so'rab, natijalarini menga yuboring:
+
+Birinchi so'rov: app/core/db.py fayli tarkibini ko'rsat.
+
+Ikkinchi so'rov: app/migrations/env.py fayli tarkibini ko'rsat.
+
+Shu ikki faylni tekshirib, biz sozlamalar to'g'ri bajarilganiga amin bo'lamiz va keyingi bosqichga o'tamiz.
