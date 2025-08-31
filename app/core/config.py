@@ -24,5 +24,8 @@ class Settings(BaseSettings):
     # Security settings
     SECRET_KEY: str = "temp-secret-key-will-be-replaced-by-user-secret"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 kun
+    
+    # AI Integration
+    GOOGLE_API_KEY: str = ""
 
 settings = Settings()
