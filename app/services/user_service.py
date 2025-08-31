@@ -6,7 +6,7 @@ from typing import List, Optional
 from uuid import UUID
 import asyncio
 
-from app.models.user import User
+from app.models.client import Client
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 
 class UserService:
@@ -19,7 +19,7 @@ class UserService:
         Initialize user service with in-memory storage.
         Note: In a real application, this would connect to a database.
         """
-        self._users: dict[UUID, User] = {}
+        self._users: dict[UUID, Client] = {}
     
     async def create_user(self, user_data: UserCreate) -> UserResponse:
         """
@@ -40,7 +40,7 @@ class UserService:
             raise ValueError(f"User with email {user_data.email} already exists")
         
         # Create new user
-        user = User(
+        user = Client(
             email=user_data.email,
             name=user_data.name,
             is_active=user_data.is_active
@@ -127,7 +127,7 @@ class UserService:
             return True
         return False
     
-    async def _get_user_by_email(self, email: str) -> Optional[User]:
+    async def _get_user_by_email(self, email: str) -> Optional[Client]:
         """
         Get user by email address.
         
@@ -142,7 +142,7 @@ class UserService:
                 return user
         return None
     
-    def _user_to_response(self, user: User) -> UserResponse:
+    def _user_to_response(self, user: Client) -> UserResponse:
         """
         Convert User model to UserResponse schema.
         

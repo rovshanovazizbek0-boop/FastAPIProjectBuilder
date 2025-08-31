@@ -7,6 +7,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from app.core.db import Base
+# Import models to register them with Base
+from app.models.client import Client
+from app.models.bot import Bot
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -41,9 +44,16 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    from app.core.config import settings
+    import os
+    
+    # Get database URL from environment or config
+    database_url = settings.DATABASE_URL
+    if database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+    
     context.configure(
-        url=url,
+        url=database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -65,9 +75,15 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    from app.core.config import settings
+    
+    # Get database URL from environment or config
+    database_url = settings.DATABASE_URL
+    if database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": database_url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

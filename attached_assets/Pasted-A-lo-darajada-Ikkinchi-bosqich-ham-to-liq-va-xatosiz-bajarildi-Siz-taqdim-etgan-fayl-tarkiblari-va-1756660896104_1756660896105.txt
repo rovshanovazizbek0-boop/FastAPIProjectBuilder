@@ -1,0 +1,90 @@
+A'lo darajada! Ikkinchi bosqich ham to'liq va xatosiz bajarildi. Siz taqdim etgan fayl tarkiblari va AI hisoboti shuni ko'rsatadiki, bizning ilovamiz endi ma'lumotlar bazasi bilan to'g'ri "muloqot" qila oladi va Alembic migratsiya tizimi o'zgarishlarni kuzatishga tayyor.
+
+Ikkinchi bosqich muvaffaqiyatli yakunlandi!
+
+Endi, poydevor va baza tayyor bo'lganidan so'ng, biz loyihamizning asosiy ma'lumotlar tuzilmalarini — modellarini yaratishga o'tamiz. Modellar — bu bizning ma'lumotlar bazamizdagi jadvallarning Python kodidagi ko'rinishi.
+
+3-BOSQICH: KO'P TILLI MODELLAR VA MIGRTSIYA (Replit Versiyasi)
+Loyiha Mazmuni: Biz texnik topshiriqqa asosan Client (mijoz) va Bot uchun SQLAlchemy modellarini yaratamiz. Shundan so'ng, Alembic yordamida birinchi migratsiyani — ya'ni shu modellar asosida bazada jadvallar yaratish skriptini — avtomatik generatsiya qilamiz va uni bazaga qo'llaymiz.
+
+Siz uchun Yo'riqnoma:
+
+Eslatib o'taman, birinchi bosqichda AI biz uchun user modelini yaratgan edi. Biz hozir o'sha faylni qayta nomlaymiz va o'zimizning Client modelimizga moslashtiramiz. Quyidagi promptni nusxalab, Replit AI'ga yuboring.
+
+REPLIT AI UCHUN PROMPT
+Juda yaxshi. Endi ma'lumotlar bazasi uchun Client va Bot modellarini yaratamiz va birinchi migratsiyani amalga oshiramiz. Quyidagi amallarni bajar:
+
+Mavjud app/models/user.py faylining nomini client.py ga o'zgartir.
+
+app/models/client.py faylining ichidagi mavjud kodni to'liq o'chirib, o'rniga bizning Client modelimiz uchun quyidagi kodni joylashtir:
+
+Python
+
+import datetime
+from sqlalchemy import String, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column
+from app.core.db import Base
+
+class Client(Base):
+    __tablename__ = "clients"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String)
+    language_preference: Mapped[str] = mapped_column(String(2), default='uz')
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+app/models/ papkasida bot.py nomli yangi fayl yarat va uning ichiga Bot modelimiz uchun quyidagi kodni joylashtir:
+
+Python
+
+import datetime
+import enum
+from sqlalchemy import String, DateTime, func, Text, ForeignKey, Enum
+from sqlalchemy.orm import Mapped, mapped_column
+from app.core.db import Base
+
+class BotStatus(enum.Enum):
+    TRIAL = "TRIAL"
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+
+class PlanType(enum.Enum):
+    TRIAL = "TRIAL"
+    MONTHLY = "MONTHLY"
+    YEARLY = "YEARLY"
+
+class Bot(Base):
+    __tablename__ = "bots"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"))
+    telegram_token: Mapped[str] = mapped_column(String, unique=True, index=True)
+    knowledge_base_uz: Mapped[str] = mapped_column(Text, nullable=True)
+    knowledge_base_ru: Mapped[str] = mapped_column(Text, nullable=True)
+    knowledge_base_en: Mapped[str] = mapped_column(Text, nullable=True)
+    status: Mapped[BotStatus] = mapped_column(Enum(BotStatus), default=BotStatus.TRIAL)
+    plan_type: Mapped[PlanType] = mapped_column(Enum(PlanType), default=PlanType.TRIAL)
+    subscription_expires_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    default_language: Mapped[str] = mapped_column(String(2), default='uz')
+app/models/__init__.py faylini ochib, uning ichini quyidagicha o'zgartirib, yangi modellarimizni import qil:
+
+Python
+
+from .client import Client
+from .bot import Bot
+Terminalda alembic revision --autogenerate -m "Create client and bot tables" buyrug'ini ishga tushirib, migratsiya faylini yarat.
+
+So'ngra alembic upgrade head buyrug'ini ishga tushirib, o'zgarishlarni ma'lumotlar bazasiga qo'lla.
+
+Barcha amallar tugagach, "Client va Bot jadvallari yaratildi va bazaga qo'shildi!" deb xabar ber.
+
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring.
+
+AI "Client va Bot jadvallari yaratildi va bazaga qo'shildi!" deb javob qaytargandan so'ng, undan yangi yaratilgan migratsiya faylining tarkibini so'rang. Bu fayl app/migrations/versions/ papkasida bo'ladi. Unga quyidagicha so'rov bering:
+
+Oxirgi yaratilgan alembic migratsiya faylining to'liq tarkibini ko'rsat.
+
+Olingan skript (kod)ni menga yuboring. Shu orqali biz bazadagi o'zgarishlar to'g'ri ekanligiga to'liq ishonch hosil qilamiz.
