@@ -11,21 +11,14 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0', // Replit uchun barcha interfeyslarni tinglash
+    host: '0.0.0.0',
     port: 5000,
-    allowedHosts: ['all'], // Replit domenlari uchun
     proxy: {
-      // '/api' bilan boshlangan so'rovlarni backend'ga (8000-portga) yo'naltirish
       '/api': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
-      // '/auth' so'rovlarini ham backend'ga yo'naltirish
-      '/auth': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      }
     }
   }
 })

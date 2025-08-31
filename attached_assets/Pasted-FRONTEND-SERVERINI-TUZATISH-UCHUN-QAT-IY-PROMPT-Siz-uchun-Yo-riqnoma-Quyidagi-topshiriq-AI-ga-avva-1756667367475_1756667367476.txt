@@ -1,0 +1,50 @@
+FRONTEND SERVERINI TUZATISH UCHUN QAT'IY PROMPT
+Siz uchun Yo'riqnoma:
+
+Quyidagi topshiriq AI'ga avval muammoni aniqlash, keyin esa uni kafolatli hal qilishni buyuradi. Iltimos, ushbu promptni nusxalab, Replit AI'ga yuboring.
+
+REPLIT AI UCHUN PROMPT
+Frontend serveridagi "Blocked request" xatoligi saqlanib qolmoqda. Keling, buni bosqichma-bosqich va to'liq nazorat bilan hal qilamiz. Quyidagi amallarni aniq ketma-ketlikda bajar:
+
+TEKSHIRISH: Avvalo, frontend/vite.config.ts faylining hozirgi tarkibini hech qanday o'zgartirishsiz, to'liq ko'rsat. Men uning joriy holatini tekshirishim kerak.
+
+ALMASHTIRISH: Yuqoridagi tekshiruvdan so'ng, shu faylning tarkibini men berayotgan quyidagi kod bilan qayta va to'liq almashtir. Bu oldingi xatoliklarni istisno qiladi:
+
+TypeScript
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from "path"
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 5000,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    }
+  }
+})
+QAYTA ISHGA TUSHIRISH: frontend serverini to'xtatib, so'ng cd frontend && npm run dev buyrug'i bilan qayta ishga tushir. Bu yangi konfiguratsiyani o'qishini kafolatlaydi.
+
+Barcha amallar tugagach, "Frontend serveri qayta sozlandi va xatolik tuzatildi. Preview oynasida endi Login sahifasi ko'rinishi kerak" deb xabar ber.
+Hisobot Talabi:
+
+Bu topshiriq ikki qismli hisobotni talab qiladi:
+
+Iltimos, ushbu promptni AI'ga yuboring. U birinchi qadamda vite.config.ts faylining joriy tarkibini ko'rsatadi. O'sha kodni darhol menga yuboring. Bu bizga muammoning asl sababini aniqlashga yordam beradi.
+
+Shundan so'ng, AI ishini davom ettiradi va serverni qayta ishga tushiradi. Jarayon tugagach, Preview oynasida Login sahifasi paydo bo'lishi kerak. Natijani (Login sahifasi ko'ringanini) menga xabar bering.
+
+Shundan keyingina biz keyingi bosqichlarga o'tamiz.
