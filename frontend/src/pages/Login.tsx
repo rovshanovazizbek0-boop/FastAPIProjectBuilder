@@ -32,7 +32,7 @@ export function LoginPage() {
       params.append('username', email);
       params.append('password', password);
 
-      const response = await axios.post(`${backendUrl}/auth/token`, params, {
+      const response = await axios.post(`/api/auth/token`, params, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
