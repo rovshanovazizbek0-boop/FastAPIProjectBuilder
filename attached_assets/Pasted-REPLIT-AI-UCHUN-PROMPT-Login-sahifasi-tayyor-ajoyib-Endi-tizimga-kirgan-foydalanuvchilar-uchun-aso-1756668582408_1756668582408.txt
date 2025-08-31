@@ -1,0 +1,101 @@
+REPLIT AI UCHUN PROMPT
+Login sahifasi tayyor, ajoyib! Endi tizimga kirgan foydalanuvchilar uchun asosiy Dashboard qolipini (layout) va uni ruxsatsiz kirishdan himoya qiluvchi routing tizimini yaratamiz. Quyidagi vazifalarni bajar:
+
+Faqat tizimga kirgan foydalanuvchilar uchun sahifalarni himoya qiladigan komponent yarat. frontend/src/components/ ichida ProtectedRoute.tsx nomli yangi fayl yarat va unga quyidagi kodni joylashtir:
+
+TypeScript
+
+import { Navigate, Outlet } from "react-router-dom";
+
+export const ProtectedRoute = () => {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+};
+Asosiy Dashboard qolipi uchun komponent yarat. frontend/src/components/layout/ nomli yangi papka yarat va uning ichida DashboardLayout.tsx faylini yarat. Unga quyidagi kodni joylashtir:
+
+TypeScript
+
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    navigate("/login");
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="bg-background border-b shadow-sm">
+        <div className="container mx-auto h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold">BotFactory</h1>
+          <Button variant="outline" onClick={handleLogout}>
+            Chiqish
+          </Button>
+        </div>
+      </header>
+      <main className="flex-1 container mx-auto py-8">
+        {children}
+      </main>
+    </div>
+  );
+}
+Yangi layout'dan foydalanadigan asosiy Dashboard sahifasini yarat. frontend/src/pages/ ichida Dashboard.tsx nomli yangi fayl yarat va unga quyidagi kodni joylashtir:
+
+TypeScript
+
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+
+export function DashboardPage() {
+  return (
+    <DashboardLayout>
+      <h2 className="text-2xl font-semibold">Asosiy Panelga Xush Kelibsiz!</h2>
+      <p className="text-muted-foreground mt-2">
+        Bu yerdan siz o'z botlaringizni boshqarishingiz mumkin.
+      </p>
+    </DashboardLayout>
+  );
+}
+Bularning barchasini ulash uchun frontend/src/App.tsx faylidagi routing tizimini to'liq yangila. Endi Dashboard sahifasi ProtectedRoute bilan o'ralgan bo'ladi:
+
+TypeScript
+
+import { Routes, Route, Navigate } from "react-router-dom";
+import { LoginPage } from "./pages/Login";
+import { DashboardPage } from "./pages/Dashboard";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<DashboardPage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/login" />} />
+    </Routes>
+  );
+}
+
+export default App;
+Barcha amallar tugagach, "Dashboard qolipi va himoyalangan routing sozlandi!" deb xabar ber.
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring.
+
+AI topshiriqni bajargandan so'ng, menga loyihamizning yangi xavfsizlik va struktura qismlari bo'lgan ikki faylning to'liq tarkibini yuboring:
+
+frontend/src/components/ProtectedRoute.tsx
+
+frontend/src/components/layout/DashboardLayout.tsx
+
+Bu bosqichdan so'ng bizda tizimga kirgan foydalanuvchilar uchun to'liq ishlaydigan "shaxsiy kabinet" poydevori bo'ladi.
