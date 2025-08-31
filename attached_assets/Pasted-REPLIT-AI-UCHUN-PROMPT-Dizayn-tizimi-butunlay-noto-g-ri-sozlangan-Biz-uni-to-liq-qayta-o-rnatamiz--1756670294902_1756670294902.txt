@@ -1,3 +1,10 @@
+REPLIT AI UCHUN PROMPT
+Dizayn tizimi butunlay noto'g'ri sozlangan. Biz uni to'liq qayta o'rnatamiz. Qat'iy ravishda quyidagi amallarni bajar:
+
+frontend/tailwind.config.js faylining ichidagi BARCHA kodni o'chirib, o'rniga men berayotgan, shadcn/ui uchun to'liq sozlangan quyidagi kodni joylashtir:
+
+JavaScript
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
@@ -75,3 +82,62 @@ module.exports = {
   },
   plugins: [require("tailwindcss-animate")],
 }
+frontend/postcss.config.js faylini ham quyidagi standart kod bilan to'liq almashtir:
+
+JavaScript
+
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+frontend/src/index.css faylining tarkibini shadcn/ui uchun asosiy stillarni o'z ichiga olgan quyidagi kod bilan to'liq almashtir:
+
+CSS
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+tailwindcss-animate kutubxonasini o'rnat: npm install tailwindcss-animate
+
+Eng muhimi, frontend serverini to'xtatib, cd frontend && npm run dev buyrug'i bilan qayta ishga tushir.
+
+Barcha amallar tugagach, "Dizayn tizimi to'liq qayta o'rnatildi va endi stillar to'g'ri ishlashi kerak!" deb xabar ber.
+Hisobot Talabi:
+
+Ushbu yakuniy choralardan so'ng, Preview oynasida siz nihoyat chiroyli, to'g'ri stillar bilan ishlayotgan Login sahifasini ko'rishingiz kerak. Uning foni kulrang, formasi esa oq rangli Card ichida bo'lishi kerak.
