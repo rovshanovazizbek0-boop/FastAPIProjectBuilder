@@ -1,0 +1,136 @@
+Barakalla! Endi men ham to'liq amin bo'ldim. Hisobot uchun rahmat. Xavfsizlik qismi mukammal qurilgan. Bu bilan loyihamizning eng nozik va mas'uliyatli qismlaridan birini yakunladik.
+
+Beshinchi bosqich to'liq va muvaffaqiyatli yakunlandi! 🎉
+
+Endi biz qurgan autentifikatsiya tizimidan foydalangan holda, faqat tizimga kirgan mijozlar o'zlarining shaxsiy botlarini yarata oladigan va ko'ra oladigan funksionalni quramiz. Bu bizning SaaS platformamizning asosiy funksiyalaridan biri bo'ladi.
+
+6-BOSQICH: BOTLARNI BOSHQARISH (CRUD) (Replit Versiyasi)
+Loyiha Mazmuni: Biz ikkita yangi, himoyalangan API endpoint'ini yaratamiz. Birinchisi (POST /bots) tizimdagi joriy mijoz uchun yangi bot yaratadi. Ikkinchisi (GET /bots/me) esa o'sha mijozga tegishli barcha botlar ro'yxatini qaytaradi. Bu amallar faqat haqiqiy token bilan amalga oshirilishi mumkin bo'ladi.
+
+Siz uchun Yo'riqnoma:
+
+Quyidagi promptni nusxalab, Replit AI'ga yuboring. U yangi botlarni boshqarish mantig'ini yaratadi.
+
+REPLIT AI UCHUN PROMPT
+Autentifikatsiya tizimi tayyor, ajoyib! Endi tizimga kirgan foydalanuvchilar uchun botlarni boshqarish (yaratish va ko'rish) funksiyasini qo'shamiz. Quyidagi amallarni bajar:
+
+Tokenni tekshiruvchi Dependency yarat. app/api/ papkasida dependencies.py nomli yangi fayl yarat va unga JWT tokenni tekshirib, joriy mijozni ma'lumotlar bazasidan olib beradigan get_current_client funksiyasini qo'sh:
+
+Python
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
+from app.core.db import get_db
+from app.models import Client
+from sqlalchemy.future import select
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
+async def get_current_client(
+    token: str = Depends(oauth2_scheme), 
+    db: AsyncSession = Depends(get_db)
+) -> Client:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    result = await db.execute(select(Client).where(Client.email == email))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise credentials_exception
+    return user
+Botlar uchun API endpoint'larini yarat. app/api/endpoints/ papkasida bots.py nomli yangi fayl yarat. Unga POST / (yangi bot yaratish) va GET /me (mening botlarim) endpoint'larini qo'sh. Bu endpoint'lar get_current_client dependency'si bilan himoyalangan bo'lishi kerak:
+
+Python
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.db import get_db
+from app.models import Bot, Client
+from app.schemas import BotCreate, BotPublic
+from app.api.dependencies import get_current_client
+from sqlalchemy.future import select
+
+router = APIRouter()
+
+@router.post("/", response_model=BotPublic, status_code=201)
+async def create_bot(
+    bot_in: BotCreate,
+    db: AsyncSession = Depends(get_db),
+    current_client: Client = Depends(get_current_client)
+):
+    """
+    Create a new bot for the current client.
+    """
+    new_bot = Bot(**bot_in.model_dump(), client_id=current_client.id)
+    db.add(new_bot)
+    await db.commit()
+    await db.refresh(new_bot)
+    return new_bot
+
+@router.get("/me", response_model=list[BotPublic])
+async def get_my_bots(
+    db: AsyncSession = Depends(get_db),
+    current_client: Client = Depends(get_current_client)
+):
+    """
+    Get all bots owned by the current client.
+    """
+    result = await db.execute(
+        select(Bot).where(Bot.client_id == current_client.id)
+    )
+    bots = result.scalars().all()
+    return bots
+Yangi router'ni asosiy ilovaga ula. app/main.py faylini ochib, yangi bots router'ini /bots prefixi bilan ula. Shuningdek, clients endpoint'i uchun ham fayl va router qo'shib qo'yamiz.
+
+Python
+
+# Avval clients endpoint'ini yarat
+# app/api/endpoints/clients.py faylini yarat va ichiga yoz:
+from fastapi import APIRouter, Depends
+from app.schemas import ClientPublic
+from app.api.dependencies import get_current_client
+from app.models import Client
+
+router = APIRouter()
+
+@router.get("/me", response_model=ClientPublic)
+def read_users_me(current_user: Client = Depends(get_current_client)):
+    return current_user
+
+# Endi app/main.py faylini yangila:
+from fastapi import FastAPI
+from app.api import auth
+from app.api.endpoints import bots, clients # yangi router'larni import qil
+
+app = FastAPI(title="BotFactory API")
+
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(bots.router, prefix="/bots", tags=["Bots"])
+app.include_router(clients.router, prefix="/clients", tags=["Clients"])
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to BotFactory API"}
+Barcha amallar tugagach, "Botlarni boshqarish (CRUD) endpoint'lari yaratildi!" deb xabar ber.
+
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring.
+
+AI "Botlarni boshqarish (CRUD) endpoint'lari yaratildi!" deb javob qaytargach, menga app/api/endpoints/bots.py faylining to'liq tarkibini yuboring.
+
+Bu fayl yangi funksionalimizning asosiy mantig'ini — botlarni qanday yaratish va o'qishni — o'zida jamlaydi. Uni tekshirib, loyihamizning eng asosiy qismi bo'lgan webhook'ga o'tamiz!
