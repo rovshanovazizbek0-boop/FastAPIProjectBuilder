@@ -1,0 +1,125 @@
+Zo'r ish\! To'rtinchi bosqich ham muvaffaqiyatli yakunlandi. AI hisoboti va schemalarning tuzilishi shuni ko'rsatadiki, hammasi to'g'ri bajarilgan.
+
+Endi bizning ilovamiz ma'lumotlarni qanday saqlashni (`Models`) va ular bilan API orqali qanday muloqot qilishni (`Schemas`) aniq biladi. Ma'lumotlar bilan ishlash uchun poydevorimiz to'liq tayyor.
+
+**To'rtinchi bosqich muvaffaqiyatli yakunlandi\!**
+
+Endi navbat eng qiziqarli va muhim qismlardan biriga — **Foydalanuvchi Autentifikatsiyasiga**. Biz shunday tizim yaratamizki, mijozlar ro'yxatdan o'tib, tizimga kirishlari va himoyalangan amallarni bajarish uchun maxsus "kalit" (JWT token) olishlari mumkin bo'ladi.
+
+-----
+
+### **5-BOSQICH: FOYDALANUVCHI AUTENTIFIKATSIYASI (Replit Versiyasi)**
+
+**Loyiha Mazmuni:** Biz `passlib`, `bcrypt` va `python-jose` kutubxonalaridan foydalanib, xavfsiz parol xeshlash va JWT tokenlariga asoslangan tizimga kirish (login) funksiyasini yaratamiz. Shuningdek, faqat tizimga kirgan foydalanuvchilar kira oladigan birinchi himoyalangan endpoint'ni (`/clients/me`) ishga tushiramiz.
+
+**Siz uchun Yo'riqnoma:**
+
+Bu ancha katta va bir nechta fayllarni o'zgartirishni talab qiladigan bosqich. Quyidagi promptni diqqat bilan nusxalab, Replit AI'ga yuboring.
+
+-----
+
+#### **REPLIT AI UCHUN PROMPT**
+
+Ajoyib, schemalar tayyor. Endi foydalanuvchilar uchun xavfsiz autentifikatsiya tizimini quramiz. Buning uchun JWT tokenlaridan foydalanamiz. Iltimos, quyidagi amallarni bajar:
+
+1.  Kerakli xavfsizlik kutubxonalarini o'rnat:
+    `uv pip install "passlib[bcrypt]" "python-jose[cryptography]" python-multipart`
+
+2.  `app/core/config.py` faylini ochib, `Settings` klassiga `SECRET_KEY` va tokenning yashash muddati uchun sozlamalarni qo'sh:
+
+    ```python
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+
+    class Settings(BaseSettings):
+        model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+        
+        DATABASE_URL: str
+        SECRET_KEY: str
+        ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 kun
+
+    settings = Settings()
+    ```
+
+3.  `app/core/` papkasida `security.py` nomli yangi fayl yarat va unga parollarni xeshlash hamda JWT tokenlarni yaratish/tekshirish uchun quyidagi kodni joylashtir:
+
+    ```python
+    from datetime import datetime, timedelta, timezone
+    from passlib.context import CryptContext
+    from jose import JWTError, jwt
+    from app.core.config import settings
+
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    ALGORITHM = "HS256"
+
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
+        return pwd_context.verify(plain_password, hashed_password)
+
+    def get_password_hash(password: str) -> str:
+        return pwd_context.hash(password)
+
+    def create_access_token(data: dict):
+        to_encode = data.copy()
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+        return encoded_jwt
+    ```
+
+4.  `app/api/` papkasida `auth.py` nomli yangi fayl yarat. Unga tizimga kirish (login) uchun `/token` endpoint'ini quyidagi kod bilan qo'sh:
+
+    ```python
+    from fastapi import APIRouter, Depends, HTTPException, status
+    from fastapi.security import OAuth2PasswordRequestForm
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from app.core.db import get_db
+    from app.core.security import create_access_token, verify_password
+    from app.models import Client
+    from sqlalchemy.future import select
+
+    router = APIRouter(tags=["Auth"])
+
+    @router.post("/token")
+    async def login_for_access_token(
+        form_data: OAuth2PasswordRequestForm = Depends(), 
+        db: AsyncSession = Depends(get_db)
+    ):
+        result = await db.execute(select(Client).where(Client.email == form_data.username))
+        user = result.scalar_one_or_none()
+        
+        if not user or not verify_password(form_data.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        access_token = create_access_token(data={"sub": user.email})
+        return {"access_token": access_token, "token_type": "bearer"}
+    ```
+
+5.  Endi `app/main.py` faylini ochib, yangi `auth` router'ini asosiy ilovaga ula. `main.py` faylining tarkibini quyidagicha yangila:
+
+    ```python
+    from fastapi import FastAPI
+    from app.api import auth # auth router'ni import qilamiz
+
+    app = FastAPI(title="BotFactory API")
+
+    app.include_router(auth.router, prefix="/auth") # Uni /auth prefixi bilan ulaymiz
+
+    @app.get("/")
+    def read_root():
+        return {"message": "Welcome to BotFactory API"}
+    ```
+
+Barcha amallar tugagach, "Foydalanuvchi autentifikatsiyasi sozlandi\!" deb xabar ber.
+
+-----
+
+**Hisobot Talabi:**
+
+1.  Ushbu promptni Replit AI'ga yuboring. Replit sizdan `SECRET_KEY` uchun Secret yaratishni so'rashi mumkin. Unga istalgan murakkab va tasodifiy matnni kiriting (masalan, `openssl rand -hex 32` buyrug'i bilan generatsiya qilingan).
+2.  AI "Foydalanuvchi autentifikatsiyasi sozlandi\!" deb javob qaytargandan so'ng, menga **`app/core/security.py`** va **`app/api/auth.py`** fayllarining to'liq tarkibini yuboring.
+
+Bu ikki fayl tizimimizning xavfsizlik va kirish mantig'ining asosini tashkil qiladi. Ularni tekshirib, keyingi bosqichga o'tamiz.
