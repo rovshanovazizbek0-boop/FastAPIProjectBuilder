@@ -1,0 +1,171 @@
+A'lo! Kodni tekshirdim — u benuqson. Xavfsizlik, ma'lumotlar bilan ishlash va API mantig'i to'g'ri bog'langan. Siz bilan biz platformamizning butun boshqaruv qismini qurib bo'ldik! Endi mijozlar ro'yxatdan o'tib, tizimga kirib, o'z botlarini xavfsiz yarata oladilar. Bu juda katta yutuq.
+
+Oltinchi bosqich muvaffaqiyatli yakunlandi! 🚀
+
+Endi loyihamizning yuragiga, uning eng asosiy va qiziqarli qismiga yetib keldik. Bu bosqichda biz shunchaki ma'lumotni saqlaydigan tizimdan, haqiqiy foydalanuvchilar bilan Telegram'da muloqot qiladigan va ularga Google Gemini yordamida aqlli javoblar beradigan platformaga aylanamiz.
+
+7-BOSQICH: ASOSIY LOGIKA - KO'P TILLI WEBHOOK (Replit Versiyasi)
+Loyiha Mazmuni: Biz /webhook/{token} manzilini yaratamiz. Telegram'dan foydalanuvchi xabari shu manzilga kelganda, tizimimiz quyidagi ishlarni bajaradi:
+
+Token orqali qaysi botga yozilganini aniqlaydi.
+
+Foydalanuvchi tilini (uz, ru yoki en) aniqlaydi.
+
+Botning o'sha tilga mos bilimlar bazasini oladi.
+
+Maxsus "Asosiy AI Prompti" yordamida Gemini'ga so'rov yuboradi.
+
+Gemini'dan kelgan javobni Telegram orqali foydalanuvchiga qaytaradi.
+
+Siz uchun Yo'riqnoma:
+
+Quyidagi prompt loyihamizga "jon" kiritadi. Uni nusxalab, Replit AI'ga yuboring.
+
+REPLIT AI UCHUN PROMPT
+Botlarni boshqarish qismi tayyor. Endi Telegram'dan keladigan xabarlarni qabul qilib, Google Gemini AI yordamida javob qaytaradigan asosiy webhook'ni yaratamiz. Quyidagi vazifalarni bajar:
+
+Kerakli kutubxonalarni o'rnat:
+uv pip install httpx google-generativeai
+
+app/core/config.py fayliga GOOGLE_API_KEY sozlamasini qo'sh:
+
+Python
+
+# ... mavjud sozlamalar
+class Settings(BaseSettings):
+    # ...
+    DATABASE_URL: str
+    SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
+
+    # Yangi qatorni qo'sh
+    GOOGLE_API_KEY: str
+
+settings = Settings()
+app/services/ papkasida ai_service.py nomli yangi fayl yarat. Unga Master AI Prompt'ni shakllantirib, Gemini'dan javob oladigan funksiyani qo'sh:
+
+Python
+
+import google.generativeai as genai
+from app.core.config import settings
+
+genai.configure(api_key=settings.GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+MASTER_PROMPT_TEMPLATE = """Sen mijozlarga yordam beruvchi chatbotsan. Sening vazifang — faqat va faqat quyida berilgan BAZA MA'LUMOTLARI asosida savollarga javob berish. Javobni aniq va qisqa, so'ralgan tilda shakllantir.
+
+Qoidalar:
+
+Javobing faqat berilgan BAZA MA'LUMOTLARI ichida bo'lishi kerak.
+
+Agar savolga javob BAZA MA'LUMOTLARI'da mavjud bo'lmasa, "{language_name}" tilida "Kechirasiz, bu savol bo'yicha menda ma'lumot yo'q" deb javob ber.
+
+O'zingdan hech narsa to'qima va taxmin qilma.
+
+Javobni "{language_name}" tilida berishing SHART.
+
+BAZA MA'LUMOTLARI ({language_name} tilida):
+{bot_knowledge_base}
+MIJOZNING SAVOLI:
+"{user_message}"
+
+Javobing ({language_name} tilida):"""
+
+async def get_gemini_response(knowledge_base: str, user_message: str, lang: str) -> str:
+    try:
+        prompt = MASTER_PROMPT_TEMPLATE.format(
+            language_name=lang,
+            bot_knowledge_base=knowledge_base,
+            user_message=user_message
+        )
+        response = await model.generate_content_async(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Error calling Gemini API: {e}")
+        error_messages = {
+            "uz": "AI bilan bog'lanishda xatolik yuz berdi.",
+            "ru": "Произошла ошибка при подключении к AI.",
+            "en": "An error occurred while connecting to the AI."
+        }
+        return error_messages.get(lang, error_messages["en"])
+```
+app/api/ papkasida telegram.py nomli yangi fayl yarat. Unga /webhook/{token} endpoint'ini quyidagi mantiq bilan qo'sh:
+
+Python
+
+import httpx
+from fastapi import APIRouter, Depends, Request, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.db import get_db
+from app.models import Bot
+from sqlalchemy.future import select
+from app.services.ai_service import get_gemini_response
+
+router = APIRouter()
+TELEGRAM_API_URL = "https://api.telegram.org/bot{token}/sendMessage"
+
+@router.post("/webhook/{token}")
+async def process_telegram_update(token: str, request: Request, db: AsyncSession = Depends(get_db)):
+    update = await request.json()
+
+    # Botni bazadan topish
+    result = await db.execute(select(Bot).where(Bot.telegram_token == token))
+    bot = result.scalar_one_or_none()
+    if not bot:
+        return {"status": "error", "message": "Bot not found"}
+
+    # Xabarni va chat ID'ni olish
+    try:
+        chat_id = update["message"]["chat"]["id"]
+        user_message = update["message"]["text"]
+        user_lang_code = update["message"]["from"].get("language_code", bot.default_language)
+    except KeyError:
+        return {"status": "ok", "message": "Not a text message"}
+
+    # Tilni aniqlash va kerakli bilimlar bazasini tanlash
+    lang = "uz" # default
+    if "ru" in user_lang_code: lang = "ru"
+    if "en" in user_lang_code: lang = "en"
+
+    knowledge_base = getattr(bot, f"knowledge_base_{lang}", None)
+    if not knowledge_base: # Agar o'sha tilda baza bo'lmasa, default tilga o'tish
+        lang = bot.default_language
+        knowledge_base = getattr(bot, f"knowledge_base_{lang}")
+
+    if not knowledge_base: # Agar umuman baza bo'lmasa
+         return {"status": "error", "message": "Knowledge base is empty"}
+
+    # Gemini'dan javob olish
+    ai_response = await get_gemini_response(knowledge_base, user_message, lang)
+
+    # Telegram'ga javob yuborish
+    async with httpx.AsyncClient() as client:
+        tg_url = TELEGRAM_API_URL.format(token=bot.telegram_token)
+        await client.post(tg_url, json={"chat_id": chat_id, "text": ai_response})
+
+    return {"status": "ok"}
+Yangi telegram router'ini app/main.py faylida ilovaga ula:
+
+Python
+
+from fastapi import FastAPI
+from app.api import auth, telegram # telegram'ni import qil
+from app.api.endpoints import bots, clients
+
+app = FastAPI(title="BotFactory API")
+
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(bots.router, prefix="/bots", tags=["Bots"])
+app.include_router(clients.router, prefix="/clients", tags=["Clients"])
+app.include_router(telegram.router, prefix="/telegram", tags=["Telegram Webhook"]) # Yangi router'ni ula
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to BotFactory API"}
+Barcha amallar tugagach, "Telegram webhook endpoint'i va AI integratsiyasi yaratildi!" deb xabar ber.
+
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring. Replit sizdan GOOGLE_API_KEY uchun Secret yaratishni so'rashi mumkin.
+
+AI ishini tugatgach, menga loyihamizning "yuragi" bo'lgan ikki faylning to'liq tarkibini yuboring: app/services/ai_service.py va app/api/telegram.py.
