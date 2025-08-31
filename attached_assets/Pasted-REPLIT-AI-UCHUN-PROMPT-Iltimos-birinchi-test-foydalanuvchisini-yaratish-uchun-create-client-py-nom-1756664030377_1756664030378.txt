@@ -1,0 +1,111 @@
+REPLIT AI UCHUN PROMPT
+
+Iltimos, birinchi test foydalanuvchisini yaratish uchun create_client.py nomli vaqtinchalik fayl yarat va uni ishga tushir. Parol "string" bo'lsin.
+
+
+
+Python
+
+
+
+import asynciofrom sqlalchemy import create_enginefrom sqlalchemy.orm import sessionmakerfrom app.core.security import get_password_hashfrom app.models.client import Clientimport os
+
+
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
+
+engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)async def create_first_client():
+
+    db = SessionLocal()
+
+    try:
+
+        # Check if client already exists
+
+        existing_client = db.query(Client).filter(Client.email == "test@example.com").first()
+
+        if not existing_client:
+
+            hashed_password = get_password_hash("string")
+
+            new_client = Client(
+
+                email="test@example.com",
+
+                company_name="Test Company",
+
+                password_hash=hashed_password
+
+            )
+
+            db.add(new_client)
+
+            db.commit()
+
+            print("Test Client created successfully!")
+
+        else:
+
+            print("Test Client already exists.")
+
+    finally:
+
+        db.close()if __name__ == "__main__":
+
+    # Bu qismni asinxron funksiyani to'g'ri ishga tushirish uchun o'zgartirdik
+
+    # Replit'da top-level await ishlamasligi mumkin
+
+    asyncio.run(create_first_client())
+
+Yuqoridagi kodni create_client.py fayliga joylashtir va python create_client.py buyrug'i bilan ishga tushir. Natijasini menga ko'rsat.
+
+2-Qadam: Tizimga Kirish (Token Olish)
+
+
+
+AI "Test Client created successfully!" deb javob bergach, yana /docs sahifasiga qayting.
+
+POST /auth/token endpoint'ini oching va "Try it out" tugmasini bosing.
+
+username maydoniga test@example.com, password maydoniga string deb yozing.
+
+"Execute" tugmasini bosing. Pastda sizga uzun harf va sonlardan iborat access_token beriladi. Uni nusxalab oling.
+
+3-Qadam: Bot Yaratish
+
+
+
+/docs sahifasining eng yuqorisidagi yashil "Authorize" tugmasini bosing.
+
+Ochilgan oynaga Bearer  (Bearer so'zidan keyin probel bor) so'zini yozib, yonidan nusxalagan tokeningizni joylashtiring. "Authorize" tugmasini bosing.
+
+Endi POST /bots/ endpoint'ini oching, "Try it out" tugmasini bosing.
+
+"Request body" maydoniga quyidagi ma'lumotlarni joylashtiring:
+
+
+
+JSON
+
+
+
+{
+
+  "telegram_token": "8463377746:AAEtuqxdrcIEHhtCCAHv40xHTyZcGOuaRTU",
+
+  "knowledge_base_uz": "Salom! Bizning kompaniyamiz eng zo'r xizmatlarni taklif qiladi.",
+
+  "knowledge_base_ru": "Здравствуйте! Наша компания предлагает лучшие услуги.",
+
+  "knowledge_base_en": "Hello! Our company offers the best services."
+
+}
+
+"Execute" tugmasini bosing.
+
+Agar hammasi to'g'ri bo'lsa, tizim sizga 201 kod bilan yangi yaratilgan bot ma'lumotlarini qaytaradi.
