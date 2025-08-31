@@ -1,0 +1,157 @@
+REPLIT AI UCHUN PROMPT
+Monorepo muvaffaqiyatli qurildi, rahmat! Endi foydalanuvchilar tizimga kirishi uchun to'liq ishlaydigan Login sahifasini yaratamiz. shadcn/ui komponentlari, react-router-dom va axios'dan foydalanamiz. Quyidagi vazifalarni bajar:
+
+frontend papkasi ichida shadcn/ui yordamida kerakli komponentlarni loyihaga qo'sh:
+npx shadcn-ui@latest add button card input label
+
+frontend/src/pages nomli yangi papka yarat. Uning ichida Login.tsx nomli fayl yarat.
+
+frontend/src/pages/Login.tsx fayliga quyidagi to'liq kodni joylashtir. Bu kod Login sahifasining dizayni va mantiqini o'z ichiga oladi:
+
+TypeScript
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+export function LoginPage() {
+  const [email, setEmail] = useState("test@example.com");
+  const [password, setPassword] = useState("string");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Backend URL manzilini Replit'ning joriy URL'idan olish mumkin,
+    // yoki vaqtinchalik to'g'ridan-to'g'ri yozib turamiz.
+    // Muhim: Replit'da Backend URL manzilini to'g'ri sozlash kerak bo'ladi.
+    const backendUrl = `https://${window.location.hostname}`;
+
+    try {
+      const params = new URLSearchParams();
+      params.append('username', email);
+      params.append('password', password);
+
+      const response = await axios.post(`${backendUrl}/auth/token`, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+
+      if (response.data.access_token) {
+        localStorage.setItem("access_token", response.data.access_token);
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setError("Login yoki parol xato. Iltimos, qayta urinib ko'ring.");
+      console.error("Login failed:", err);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardDescription>
+            BotFactory hisobingizga kiring
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Parol</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <Button type="submit" className="w-full">
+              Kirish
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+Asosiy routing'ni sozlash uchun frontend/src/App.tsx fayli tarkibini quyidagicha to'liq o'zgartir:
+
+TypeScript
+
+import { Routes, Route, Navigate } from "react-router-dom";
+import { LoginPage } from "./pages/Login";
+
+// Vaqtinchalik Dashboard sahifasi
+function DashboardPage() {
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl font-bold">Asosiy Sahifa (Dashboard)</h1>
+      <p>Siz tizimga muvaffaqiyatli kirdingiz!</p>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="*" element={<Navigate to="/login" />} />
+    </Routes>
+  );
+}
+
+export default App;
+Ilovaga router'ni ulash uchun frontend/src/main.tsx faylini quyidagicha yangila:
+
+TypeScript
+
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import App from './App.tsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>,
+)
+Barcha amallar tugagach, "Login sahifasi va routing tizimi sozlandi!" deb xabar ber.
+Hisobot Talabi:
+
+Ushbu promptni Replit AI'ga yuboring.
+
+AI topshiriqni bajargandan so'ng, menga frontend/src/pages/Login.tsx va frontend/src/App.tsx fayllarining to'liq tarkibini yuboring.
+
+Shu fayllarni tekshirib, biz platformamizning "darvozasi" to'g'ri qurilganiga amin bo'lamiz va keyingi bosqichga o'tamiz!
